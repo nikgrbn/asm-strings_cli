@@ -2,6 +2,7 @@
 
 .extern printf
 .extern pstrlen
+.extern swapCase
 
 .section .rodata
 .align 8
@@ -9,6 +10,8 @@ msg:
     .string	"Option %d selected\n"
 msg_31:
     .string "first pstring length: %d, second pstring length: %d\n"
+msg_33:
+    .string "length: %d, string: %s\n"
 invalid_msg:
     .string	"Invalid option!\n"
 
@@ -66,10 +69,32 @@ run_func:
 
 # Case 33: call swapCase
 .c_33:
-	movq $msg, %rdi
-	movq $33, %rsi
-	xorq %rax, %rax
-	call printf
+    # Pass &pstr1 as argument to swapCase
+    movq -8(%rbp), %rdi
+    xorq %rax, %rax
+    call swapCase
+
+    # Print swapped string
+    movq $msg_33, %rdi
+    movq -8(%rbp), %rsi
+    movzb (%rsi), %rsi # Pass first byte (string length) as argument
+    movq %rax, %rdx # Move swapCase() return value to rdx
+    xorq %rax, %rax
+    call printf
+
+    # Pass &pstr2 as argument to swapCase
+    movq -16(%rbp), %rdi
+    xorq %rax, %rax
+    call swapCase
+
+    # Print swapped string
+    movq $msg_33, %rdi
+    movq -16(%rbp), %rsi
+    movzb (%rsi), %rsi # Pass first byte (string length) as argument
+    movq %rax, %rdx # Move swapCase() return value to rdx
+    xorq %rax, %rax
+    call printf
+
     jmp .leave
 
 # Case 34: call pstrijcpy

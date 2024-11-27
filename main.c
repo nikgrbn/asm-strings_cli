@@ -47,6 +47,6 @@ int main(void) {
 	int choice;
 	scanf("%d", &choice);
 	run_func(choice, &pstr1, &pstr2);
-	
+
 	return 0;
 }
