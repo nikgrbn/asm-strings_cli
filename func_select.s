@@ -1,12 +1,16 @@
 # 337762421 Nikita Grebenchuk
 
 .extern printf
-
+.extern pstrlen
 
 .section .rodata
 .align 8
-msg:	.string	"Option %d selected\n"
-invalid_msg:	.string	"Invalid option!\n"
+msg:
+    .string	"Option %d selected\n"
+msg_31:
+    .string "first pstring length: %d, second pstring length: %d\n"
+invalid_msg:
+    .string	"Invalid option!\n"
 
 jmp_table:
     .quad .c_31  # Case 31: call pstrlen
@@ -26,6 +30,12 @@ run_func:
     push %rbp
     mov %rsp, %rbp
 
+    # Save pstrings pointers on the stack
+    subq $16, %rsp
+    movq %rsi, -8(%rbp)
+    movq %rdx, -16(%rbp)
+
+    # Load the option number
     leaq -31(%rdi), %rsi
     cmpq $6, %rsi   # 6 is for rsi offset
     ja .c_def
@@ -33,10 +43,25 @@ run_func:
 
 # Case 31: call pstrlen
 .c_31:
-	movq $msg, %rdi
-	movq $31, %rsi
-	xorq %rax, %rax
-	call printf
+    # Pass &pstr1 as argument to pstrlen
+    movq -8(%rbp), %rdi
+    xorq %rax, %rax
+    call pstrlen
+    pushq %rax # Save the return value
+
+    # Pass &pstr2 as argument to pstrlen
+    movq -16(%rbp), %rdi
+    xorq %rax, %rax
+    call pstrlen
+    pushq %rax # Save the return value
+
+    # Print the lengths
+    movq $msg_31, %rdi
+    popq %rdx # Pop &pstr2 length into rdx
+    popq %rsi # Pop &pstr1 length into rsi
+    xorq %rax, %rax
+    call printf
+
     jmp .leave
 
 # Case 33: call swapCase
