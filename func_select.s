@@ -16,7 +16,7 @@ msg_31:
 msg_str:
     .string "length: %d, string: %s\n"
 msg_def:
-    .string	"Invalid option!\n"
+    .string	"invalid option!\n"
 inp_34:
     .string "%hhu %hhu"
 

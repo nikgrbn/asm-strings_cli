@@ -7,7 +7,7 @@
 invalid_input:
     .string	"invalid input!\n"
 invalid_cat_msg:
-    .string "cannot canconcatenate strings!\n"
+    .string "cannot concatenate strings!\n"
 msg:
     .string "DEBUG: i=%hhu j=%hhu\n"
 
@@ -48,7 +48,7 @@ swapCase:
     cmpb $0x61, %dl # Check if letter >= 'a'
     jl .not_lower
     cmpb $0x7A, %dl # Check if letter <= 'z'
-    jg .not_lower
+    ja .not_lower
 
     # If came here, letter is lowercase. Switch to upper.
     subb $0x20, %dl
@@ -58,7 +58,7 @@ swapCase:
     cmpb $0x41, %dl # Check if letter >= 'A'
     jl .next
     cmpb $0x5A, %dl # Check if letter <= 'Z'
-    jg .next
+    ja .next
 
     # If came here, letter is uppercase. Switch to lower.
     addb $0x20, %dl
@@ -92,20 +92,20 @@ pstrijcpy:
     cmpb $0, %dl
     jl .invalid_cpy # i < 0
     cmpb %cl, %dl
-    jge .invalid_cpy # i >= j
+    ja .invalid_cpy # i > j
 
     # Check if j is valid
     cmpb (%rdi), %cl
-    jge .invalid_cpy # j > str1 length
+    jae .invalid_cpy # j > str1 length
     cmpb (%rsi), %cl
-    jge .invalid_cpy # j > str2 length
+    jae .invalid_cpy # j > str2 length
 
     incq %rdi # Skip length byte
     incq %rsi # Skip length byte
     xorb %al, %al
 .inc_str_cpy: # Increment string pointers until i
     cmpb %dl, %al
-    jge .loop_cpy
+    jae .loop_cpy
 
     incb %al
     incq %rdi
@@ -120,7 +120,7 @@ pstrijcpy:
 
     # Check if we reached j
     cmpb %cl, %dl
-    jge .end_cpy
+    jae .end_cpy
 
     # Iterate to next letter
     incb %dl
@@ -159,7 +159,7 @@ pstrcat:
     # Comapre length sum to 255
     add %rdx, %rcx
     cmp $255, %rcx
-    jge .invalid_cat
+    jae .invalid_cat
 
     # Update new length of &str1
     movb %cl, (%rdi)
@@ -170,7 +170,7 @@ pstrcat:
     xorb %al, %al
 .inc_str_cat:
     cmpb %dl, %al
-    jge .loop_cat
+    jae .loop_cat
 
     incb %al
     incq %rdi
@@ -184,7 +184,7 @@ pstrcat:
 
     # Check if we reached j
     cmpb %cl, %dl
-    jge .end_cat
+    jae .end_cat
 
     # Iterate to next letter
     incb %dl
