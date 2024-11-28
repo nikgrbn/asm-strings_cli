@@ -1,19 +1,22 @@
 # 337762421 Nikita Grebenchuk
 
 .extern printf
+.extern scanf
 .extern pstrlen
 .extern swapCase
 
 .section .rodata
 .align 8
 msg:
-    .string	"Option %d selected\n"
+    .string	"res - %hhu %hhu \n"
 msg_31:
     .string "first pstring length: %d, second pstring length: %d\n"
-msg_33:
+msg_str:
     .string "length: %d, string: %s\n"
-invalid_msg:
+msg_def:
     .string	"Invalid option!\n"
+inp_34:
+    .string "%hhu %hhu"
 
 jmp_table:
     .quad .c_31  # Case 31: call pstrlen
@@ -34,7 +37,7 @@ run_func:
     mov %rsp, %rbp
 
     # Save pstrings pointers on the stack
-    subq $16, %rsp
+    subq $32, %rsp # 16 bytes for pstrings, 16 bytes for functions usage
     movq %rsi, -8(%rbp)
     movq %rdx, -16(%rbp)
 
@@ -75,12 +78,9 @@ run_func:
     call swapCase
 
     # Print swapped string
-    movq $msg_33, %rdi
-    movq -8(%rbp), %rsi
-    movzb (%rsi), %rsi # Pass first byte (string length) as argument
-    movq %rax, %rdx # Move swapCase() return value to rdx
+    movq %rax, %rdi # Move swapCase() return value to rdi
     xorq %rax, %rax
-    call printf
+    call print_pstring
 
     # Pass &pstr2 as argument to swapCase
     movq -16(%rbp), %rdi
@@ -88,21 +88,43 @@ run_func:
     call swapCase
 
     # Print swapped string
-    movq $msg_33, %rdi
-    movq -16(%rbp), %rsi
-    movzb (%rsi), %rsi # Pass first byte (string length) as argument
-    movq %rax, %rdx # Move swapCase() return value to rdx
+    movq %rax, %rdi # Move swapCase() return value to rdi
     xorq %rax, %rax
-    call printf
+    call print_pstring
 
     jmp .leave
 
 # Case 34: call pstrijcpy
 .c_34:
-	movq $msg, %rdi
-	movq $34, %rsi
-	xorq %rax, %rax
-	call printf
+    # Get input interval
+    movq $inp_34, %rdi
+    leaq -24(%rbp), %rsi # Save i on stack
+    leaq -32(%rbp), %rdx # Save j on stack
+    xor %rax, %rax
+    call scanf
+
+    #movq $msg, %rdi
+    #movq -24(%rbp), %rsi
+    #movq -32(%rbp), %rdx
+    #xorq %rax, %rax
+    #call printf
+
+    # Call pstrijcpy
+    movq -8(%rbp), %rdi
+    movq -16(%rbp), %rsi
+    movq -24(%rbp), %rdx
+    movq -32(%rbp), %rcx
+    xorq %rax, %rax
+    call pstrijcpy
+
+    # Print pstrings
+    movq -8(%rbp), %rdi
+    xorq %rax, %rax
+    call print_pstring
+    movq -16(%rbp), %rdi
+    xorq %rax, %rax
+    call print_pstring
+
     jmp .leave
 
 # Case 37: call pstrcat
@@ -115,12 +137,33 @@ run_func:
 
 # Case 32: default
 .c_def:
-	movq $invalid_msg, %rdi
+	movq $msg_def, %rdi
 	xorq %rax, %rax
 	call printf
     jmp .leave
 
 .leave:
+    # Leave
+    mov %rbp, %rsp
+    pop %rbp
+    ret
+
+
+.type print_pstring, @function
+print_pstring: # Recieves a pstring pointer and prints its length and string
+    push %rbp
+    mov %rsp, %rbp
+
+    # Pass pstring length and string to arguments
+    movzb (%rdi), %rsi
+    inc %rdi
+    movq %rdi, %rdx
+
+    # Print the string
+    movq $msg_str, %rdi
+    xorq %rax, %rax
+    call printf
+
     # Leave
     mov %rbp, %rsp
     pop %rbp

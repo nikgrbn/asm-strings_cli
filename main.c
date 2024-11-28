@@ -26,6 +26,7 @@ void get_pstring(Pstring *pstr) {
 int main(void) {
 	/* Prompt user for two Pstrings */
 	Pstring pstr1, pstr2;
+
 	get_pstring(&pstr1);
 	get_pstring(&pstr2);
 
