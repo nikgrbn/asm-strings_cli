@@ -4,6 +4,8 @@
 .extern scanf
 .extern pstrlen
 .extern swapCase
+.extern pstrijcpy
+.extern pstrcat
 
 .section .rodata
 .align 8
@@ -103,12 +105,6 @@ run_func:
     xor %rax, %rax
     call scanf
 
-    #movq $msg, %rdi
-    #movq -24(%rbp), %rsi
-    #movq -32(%rbp), %rdx
-    #xorq %rax, %rax
-    #call printf
-
     # Call pstrijcpy
     movq -8(%rbp), %rdi
     movq -16(%rbp), %rsi
@@ -129,10 +125,20 @@ run_func:
 
 # Case 37: call pstrcat
 .c_37:
-	movq $msg, %rdi
-	movq $37, %rsi
-	xorq %rax, %rax
-	call printf
+    # Call pstrcat
+    movq -8(%rbp), %rdi
+    movq -16(%rbp), %rsi
+    xorq %rax, %rax
+    call pstrcat
+
+    # Print the result
+    movq -8(%rbp), %rdi
+    xorq %rax, %rax
+    call print_pstring
+    movq -16(%rbp), %rdi
+    xorq %rax, %rax
+    call print_pstring
+
     jmp .leave
 
 # Case 32: default

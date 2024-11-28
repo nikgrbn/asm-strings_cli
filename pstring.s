@@ -6,8 +6,11 @@
 .align 8
 invalid_input:
     .string	"invalid input!\n"
+invalid_cat_msg:
+    .string "cannot canconcatenate strings!\n"
 msg:
     .string "DEBUG: i=%hhu j=%hhu\n"
+
 
 .section .text
 .globl pstrlen
@@ -82,29 +85,32 @@ pstrijcpy:
     push %rbp
     mov %rsp, %rbp
 
+    # Save pointer to &str1 so it can be returned later
+    movq %rdi, %r8
+
     # Check if i is valid
     cmpb $0, %dl
-    jl .invalid # i < 0
+    jl .invalid_cpy # i < 0
     cmpb %cl, %dl
-    jge .invalid # i >= j
+    jge .invalid_cpy # i >= j
 
     # Check if j is valid
     cmpb (%rdi), %cl
-    jge .invalid # j > str1 length
+    jge .invalid_cpy # j > str1 length
     cmpb (%rsi), %cl
-    jge .invalid # j > str2 length
+    jge .invalid_cpy # j > str2 length
 
     incq %rdi # Skip length byte
     incq %rsi # Skip length byte
     xorb %al, %al
-.inc_str: # Increment string pointers until i
+.inc_str_cpy: # Increment string pointers until i
     cmpb %dl, %al
     jge .loop_cpy
 
     incb %al
     incq %rdi
     incq %rsi
-    jmp .inc_str
+    jmp .inc_str_cpy
 
 .loop_cpy:
     # Insert src[i] into dest[i]
@@ -122,7 +128,7 @@ pstrijcpy:
     inc %rsi
     jmp .loop_cpy
 
-.invalid:
+.invalid_cpy:
     # Print invalid message
     movq $invalid_input, %rdi
     xorq %rax, %rax
@@ -130,6 +136,71 @@ pstrijcpy:
 
 .end_cpy:
     # Leave
+    movq %r8, %rax # Return pointer to &str1
+    mov %rbp, %rsp
+    pop %rbp
+    ret
+
+
+.globl pstrcat
+.type pstrcat, @function
+pstrcat:
+    # Enter
+    push %rbp
+    mov %rsp, %rbp
+
+    # Save pointer to &str1 so it can be returned later
+    movq %rdi, %r8
+
+    # Get the lengths
+    movzb (%rdi), %rdx
+    movzb (%rsi), %rcx
+
+    # Comapre length sum to 255
+    add %rdx, %rcx
+    cmp $255, %rcx
+    jge .invalid_cat
+
+    # Update new length of &str1
+    movb %cl, (%rdi)
+    inc %rdi # Skip length byte
+    inc %rsi # Skip length byte
+
+    # Increment str1 pointer until the end of the string
+    xorb %al, %al
+.inc_str_cat:
+    cmpb %dl, %al
+    jge .loop_cat
+
+    incb %al
+    incq %rdi
+    jmp .inc_str_cat
+
+.loop_cat:
+    # Insert src[j] into dest[i]
+    xor %rax, %rax
+    movb (%rsi), %al
+    movb %al, (%rdi)
+
+    # Check if we reached j
+    cmpb %cl, %dl
+    jge .end_cat
+
+    # Iterate to next letter
+    incb %dl
+    inc %rdi
+    inc %rsi
+    jmp .loop_cat
+
+.invalid_cat:
+    # Print invalid message
+    movq $invalid_cat_msg, %rdi
+    xorq %rax, %rax
+    call printf
+
+.end_cat:
+    # Leave
+    movq %r8, %rax # Return pointer to &str1
     mov %rbp, %rsp
     pop %rbp
     ret
